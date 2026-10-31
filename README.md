@@ -1,107 +1,82 @@
 # Mohamed Elsafty
 
-Data engineer in Munich. Working student on the AI & Data Platform team at **EOS GmbH**, and finishing an **M.Sc. in Management & Data Science** at Leuphana University Lüneburg (Feb 2027).
+**Data engineer — Munich, Germany**
 
-At work I build on Databricks and Azure — ingestion and transformation pipelines in PySpark, medallion data models in Delta Lake, Unity Catalog governance, and the RAG and agent components that sit on top of them. The repos here are mostly the opposite: the parts I don't get to touch at work, built end to end so I actually understand them. Kafka and Debezium CDC, dbt on Snowflake, Terraform, SCD Type 2 written by hand before I let a tool do it for me.
+I build data platforms end to end: ingestion, modeling, the infrastructure underneath, and the checks that catch it when something breaks quietly. Currently on the AI & Data Platform team at **EOS GmbH**, leading a from-scratch Databricks and Azure platform from requirements through production rollout, and finishing an **M.Sc. in Management & Data Science** at Leuphana University Lüneburg.
 
-Before Germany I did Arabic NLP and dataset work at ASAS AI, trained 500+ students in Python for Udacity's DECI program, and delivered 13+ scraping contracts on Upwork. 2x Kaggle Master.
+Before Germany: Arabic NLP and LLM dataset work at ASAS AI, 500+ students trained in Python for Udacity's DECI program, 13+ scraping contracts delivered on Upwork. 2x Kaggle Master.
 
-**If you only open three:** [FactoryPulse](https://github.com/Mohamed-Elsafty23/FactoryPulse) for data engineering, [AskNature BioRAG](https://github.com/Mohamed-Elsafty23/AskNature-RAG-based-Chatbot) for AI engineering, [Supply Chain Risk Monitor](https://github.com/Mohamed-Elsafty23/Supply-Chain-Risk-Compliance-Monitor) if you want to see streaming and dbt.
+Open to **Data Engineer**, **Analytics Engineer** and **AI / Data Platform** roles in Germany and the EU.
 
 ---
 
-## Data engineering
+## Featured work
 
-**[FactoryPulse](https://github.com/Mohamed-Elsafty23/FactoryPulse)** — Manufacturing reliability lakehouse on Azure
-Takes ~10M machine sensor readings (real AI4I 2020 data, expanded by a seeded PySpark simulator across 20 machines, 2 plants and 12 months) through Bronze → Silver → Gold in Delta Lake, ending in a star schema with SCD2 machine history via Delta `MERGE` and 100K downtime intervals derived with gaps-and-islands. Ingestion is a single metadata-driven ADF pipeline with closed watermark windows that advance only on success — the fix for the classic incremental-loading data-loss bug. The whole Azure estate is Terraform: 69 resources, Unity Catalog grants for three personas. Full run: 6m 37s on serverless.
+### [FactoryPulse](https://github.com/Mohamed-Elsafty23/FactoryPulse) — manufacturing reliability lakehouse on Azure
 
-The part I'd actually point at: 10 data-quality gates run on every execution, and the Silver↔Gold reconciliation caught two silent defects during the cloud migration — a point-in-time join quietly dropping 2.6M rows, and a machine left with two open SCD2 versions. Neither threw an error. Serving runs on DuckDB over exported Parquet behind a unit-tested semantic layer, so the dashboard still works with Azure fully decommissioned.
+`Azure` `Databricks` `PySpark` `Delta Lake` `Unity Catalog` `Azure Data Factory` `Terraform` `DuckDB`
 
-`Azure` · `Databricks` · `PySpark` · `Delta Lake` · `Unity Catalog` · `ADF` · `Terraform` · `DuckDB` · `Streamlit` · `68 tests in CI`
+10M machine sensor readings move through Bronze → Silver → Gold in Delta Lake into a star schema with SCD2 machine history via Delta `MERGE`, and 100K downtime intervals derived with the gaps-and-islands pattern. Ingestion is one metadata-driven ADF pipeline using closed watermark windows that advance only on success — the fix for the classic incremental-loading data-loss bug. 69 Azure resources under Terraform, Unity Catalog grants for three personas. Full run: **6m 37s** on serverless.
 
-**[Supply Chain Risk & Compliance Monitor](https://github.com/Mohamed-Elsafty23/Supply-Chain-Risk-Compliance-Monitor)** — Streaming risk detection on GDELT
-Pulls global event data from the GDELT 2.0 API every 15 minutes, serializes it to Avro against Confluent Schema Registry, streams it through Kafka, and lands Hive-partitioned Parquet on S3 that Snowpipe auto-ingests into Snowflake. Twelve incremental dbt models build composite risk scores across severity, sentiment, velocity and density, identify affected organizations, and aggregate country risk with SCD2 history. Three Airflow DAGs orchestrate it through Cosmos, so you get per-model visibility and freshness alerting instead of one opaque `dbt run` task. Terraform covers both AWS and Snowflake; Power BI drills into the gold schema.
+The detail worth opening the repo for: 10 data-quality gates run on every execution, and the Silver↔Gold row reconciliation caught two silent defects during the cloud migration — a point-in-time join quietly dropping 2.6M rows, and a machine left with two open SCD2 versions. Neither threw an error. The serving layer runs on DuckDB over exported Parquet behind a unit-tested semantic layer, so the dashboard still works with the Azure estate fully decommissioned.
 
-`Kafka` · `Avro` · `Snowflake` · `dbt` · `Airflow` · `AWS` · `Terraform` · `Power BI`
+### [Supply Chain Risk & Compliance Monitor](https://github.com/Mohamed-Elsafty23/Supply-Chain-Risk-Compliance-Monitor) — streaming risk detection on GDELT
 
-**[Real-Time Banking Data Pipeline](https://github.com/Mohamed-Elsafty23/Real-Time-Banking-Data-Pipeline)** — CDC from Postgres to Snowflake
-Debezium captures row-level changes off a Postgres OLTP database through a dedicated `pgoutput` replication slot, Kafka carries them, and a consumer batches `payload.after` into date-partitioned Parquet on MinIO. Airflow syncs to Snowflake every minute; dbt snapshots handle SCD2 on customers and accounts, and the gold layer exposes `is_current` dimensions plus an incremental fact table. Financial amounts use Python `Decimal` with `ROUND_DOWN` end to end. Eight containers in Docker Compose with health checks and startup ordering, because getting Debezium, Kafka and Connect to come up in the right sequence is half the work.
+`Kafka` `Avro` `Snowflake` `dbt` `Airflow` `AWS` `Terraform` `Power BI`
 
-`Debezium` · `Kafka` · `PostgreSQL` · `MinIO` · `Airflow` · `dbt` · `Snowflake` · `Docker`
+Global event data from GDELT every 15 minutes, serialized to Avro against Confluent Schema Registry, streamed through Kafka, landed as Hive-partitioned Parquet on S3 that Snowpipe auto-ingests into Snowflake. Twelve incremental dbt models build composite risk scores across severity, sentiment, velocity and density, resolve affected organizations, and aggregate country-level risk with SCD2 history.
+
+Three Airflow DAGs orchestrate it through Cosmos, so failures surface per model rather than as one opaque `dbt run` task, with freshness checks that alert before stale data reaches the dashboard. Terraform provisions both sides — AWS and Snowflake, including RBAC.
+
+### [AskNature BioRAG Chatbot](https://github.com/Mohamed-Elsafty23/AskNature-RAG-based-Chatbot) — hybrid retrieval over 1,400+ biomimicry innovations
+
+`RAG` `FAISS` `BM25` `RRF` `HyDE` `LangChain` `ragas`
+
+BM25 and FAISS run in parallel and fuse with Reciprocal Rank Fusion; HyDE expands the query first by having the model write a hypothetical ideal answer to retrieve against. Before indexing, an LLM pass with Llama-3.3-70B enriched every record with structured metadata — biological mechanisms, industry applications, sustainability impact — so retrieval stops depending on how the user happened to phrase things.
+
+Evaluated with `ragas` on faithfulness, answer relevancy and context precision/recall, because "the demo looks good" isn't a measurement.
+
+---
+
+## Data engineering & SQL
+
+| Project | What it is | Stack |
+|---|---|---|
+| **[Real-Time Banking Pipeline](https://github.com/Mohamed-Elsafty23/Real-Time-Banking-Data-Pipeline)** | Debezium captures row-level changes off Postgres through a `pgoutput` replication slot; Kafka carries them, a consumer batches date-partitioned Parquet to MinIO, Airflow syncs to Snowflake every minute, dbt snapshots handle SCD2. Eight containers with health checks and startup ordering. | Debezium · Kafka · Postgres · MinIO · Airflow · dbt · Snowflake · Docker |
+| **[Government Services DWH](https://github.com/Mohamed-Elsafty23/services-dwh)** | Citizen service requests across three channels, star schema with five SCD2 dimensions. The Silver layer handles what the source actually contained: channel names spelled four ways, office codes split between `DXB_01` and `DXB-01`, resolutions timestamped before submission — normalized or flagged, not filtered away. | PostgreSQL 15 · SQL `MERGE` · star schema · SCD2 |
+| **[Sales DWH — Northwind](https://github.com/Mohamed-Elsafty23/sales-dwh-northwind)** | Full Medallion build in pure SQL. Six dimensions, four on SCD2, validation flags carried through Silver, separate initial and incremental loads with row-count reconciliation between them. ERDs at conceptual, logical and physical levels. | PostgreSQL · SQL · ETL · star schema |
+| **[Data Quality Profiler](https://github.com/Mohamed-Elsafty23/Data-Quality-Profiler)** | One install script. A PL/pgSQL procedure introspects `information_schema` and generates SQL at runtime, profiling every table and column with zero per-table configuration — so it drops into any Postgres database unchanged. Triggers keep metrics current. | PL/pgSQL · dynamic SQL · Looker Studio |
 
 ## AI & LLM engineering
 
-**[AskNature BioRAG Chatbot](https://github.com/Mohamed-Elsafty23/AskNature-RAG-based-Chatbot)** — Hybrid retrieval over 1,400+ biomimicry innovations
-BM25 and FAISS run in parallel and get fused with Reciprocal Rank Fusion; HyDE expands the query first by having the LLM write a hypothetical ideal answer to retrieve against. Before indexing, an LLM pass with Llama-3.3-70B enriched every record with structured metadata — mechanisms, industry applications, sustainability impact — so retrieval depends less on surface wording. Embeddings from `e5-mistral-7b-instruct`, multi-provider LLM routing with retry and caching, evaluated with `ragas` on faithfulness, answer relevancy and context precision/recall.
+| Project | What it is | Stack |
+|---|---|---|
+| **[DBpedia KGQA](https://github.com/Mohamed-Elsafty23/DBpedia_KGQA)** | Natural language → SPARQL → DBpedia. Entity linking with cascading confidence thresholds, LLM query generation, execution with error-driven repair and retries, and a fallback that pulls the 1–2 hop neighborhood around linked entities when SPARQL genuinely can't answer. Answers carry their execution path and latency. | SPARQL · knowledge graphs · LLM · Gradio |
+| **[FineWeb-Edu Scorer](https://github.com/Mohamed-Elsafty23/fineweb-edu-scorer)** | Teacher–student distillation from the FineWeb-Edu paper: Llama-3.3-70B scores web text 0–5 for educational value, a Ridge regressor learns to approximate it at **96.6% F1** for a fraction of the inference cost. The app shows both side by side, so you can see where the cheap model disagrees. | scikit-learn · distillation · Streamlit |
+| **[LLM FMEA Analyzer](https://github.com/Mohamed-Elsafty23/LLM-FMEA-Analyzer)** | Implements El Hassani et al. (2025): unstructured customer reviews in, structured FMEA table out — failure modes, root causes, S/O/D ratings, computed RPN, Pareto ranking of the 20% driving 80% of risk. Mostly an exercise in validating LLM JSON before it reaches a DataFrame. | structured output · Plotly · Streamlit |
+| **LLM-Powered LCA Analysis** *(private)* | ISO 14040/44 hotspot analysis for manufactured products. Five chained modules: LLM hotspot identification across the full life cycle, arXiv retrieval and PDF parsing for evidence, solution generation grounded in that literature, then deeper analysis of the top hotspots. Multi-key failover and threaded log streaming keep long runs alive and visible. | LLM · FAISS · arXiv · Streamlit |
+| **Instruction Dataset Platform** *(private)* | Multi-user annotation tooling for Arabic LLM training data. Annotators rate instruction–completion pairs to generate preference signals for RLHF/DPO; Firestore tracks per-user progress behind Google OAuth. Built at ASAS AI, where the bottleneck was never the model — it was consistent labels from a team of humans. | Streamlit · OAuth · Firestore · RLHF data |
+| **Arabic News Scraping Pipeline** *(private)* | Corpus collection across 10+ Arabic publications, each a standalone Scrapy spider, with `selenium-stealth` and `undetected-chromedriver` for Cloudflare and JS challenges. Merged, versioned and pushed to the HuggingFace Hub for downstream LLM pre-training. | Scrapy · Selenium · HuggingFace Hub |
 
-`RAG` · `FAISS` · `BM25` · `RRF` · `HyDE` · `LangChain` · `ragas` · `Gradio`
+## Research
 
-**[DBpedia KGQA](https://github.com/Mohamed-Elsafty23/DBpedia_KGQA)** — Natural language → SPARQL → DBpedia
-Five stages: entity linking via DBpedia Spotlight with cascading confidence thresholds (0.35 → 0.2), LLM SPARQL generation primed with multi-hop, aggregate, ASK and UNION examples, execution with error-driven query repair and up to two retries, and — when SPARQL genuinely can't answer — a fallback that pulls the 1-hop and 2-hop neighborhood around the linked entities and lets the model reason over raw triples. Answers come back with the execution path and latency attached, so you can see which route produced them. Gradio front end on HuggingFace Spaces, evaluated on 445 LC-QuAD questions.
+**[Music Network Analysis](https://github.com/Mohamed-Elsafty23/Music-Network-Analysis)** — musical influence as a directed network of cover songs; centrality, community detection and topology analysis on a model grounded in cultural diffusion theory rather than assembled ad hoc.
 
-`SPARQL` · `Knowledge Graphs` · `Entity Linking` · `LLM` · `HuggingFace Spaces`
-
-**LLM-Powered Life Cycle Assessment** — ISO 14040/44 hotspot analysis for manufactured products *(private repo — happy to walk through it)*
-Five modules in sequence: an LLM hotspot analyzer identifies environmental impacts across production, distribution, use and end-of-life; an arXiv downloader pulls up to 10 relevant papers; a PDF processor extracts quantitative benchmarks; a solutions generator proposes eco-improvements grounded in that literature; and a deep analyzer revisits the highest-priority hotspots. FAISS backs semantic retrieval over the papers. Threaded processing with a `queue.Queue` log stream keeps the Streamlit UI live during long runs, and multi-key API failover keeps it from dying on a rate limit.
-
-`LLM` · `FAISS` · `arXiv retrieval` · `Streamlit` · `Plotly` · `reportlab`
-
-**[FineWeb-Edu Scorer](https://github.com/Mohamed-Elsafty23/fineweb-edu-scorer)** — Teacher–student distillation, made inspectable
-Reproduces the scoring pipeline from the FineWeb-Edu paper (Penedo et al., 2024): Llama-3.3-70B scores web text 0–5 for educational value, and a Ridge regressor trained on 150 labeled samples learns to approximate it — 96.6% F1 on the hold-out at a fraction of the inference cost. Text extraction via `trafilatura` with BeautifulSoup fallback. The Streamlit app shows teacher and student side by side so you can see where the cheap model disagrees with the expensive one.
-
-`Knowledge Distillation` · `scikit-learn` · `Streamlit` · `HuggingFace datasets`
-
-**[LLM FMEA Analyzer](https://github.com/Mohamed-Elsafty23/LLM-FMEA-Analyzer)** — Risk analysis from unstructured review text
-Implements the method from El Hassani et al. (2025). Customer car reviews go in; a structured FMEA table comes out with failure modes, root causes, Severity/Occurrence/Detection ratings and computed RPN, plus a Pareto chart ranking which 20% of failure modes drive 80% of the risk. Mostly an exercise in getting reliable structured JSON out of an LLM and validating it before it reaches a DataFrame.
-
-`Structured output` · `Prompt engineering` · `Plotly` · `Streamlit`
-
-**Instruction Dataset Evaluation Platform** — Multi-user annotation tooling for Arabic LLM training data *(private repo)*
-Streamlit app behind Google OAuth where annotators review instruction–completion pairs and rate model outputs to generate preference signals for RLHF/DPO fine-tuning. Firestore stores user profiles, per-user progress and annotation records; cookie-based session state survives page navigation. Annotations export as JSONL and feed into the HuggingFace Hub side of the pipeline. Built at ASAS AI, where the bottleneck was never the model — it was getting consistent labels out of a team of humans.
-
-`Streamlit` · `Google OAuth` · `Firestore` · `RLHF/DPO data`
-
-## Data warehousing & SQL
-
-**[Government Services Data Warehouse](https://github.com/Mohamed-Elsafty23/services-dwh)** — PostgreSQL 15, star schema, five dimensions on SCD2
-Citizen service requests across portal, call center and branch, modeled as a central fact with six dimensions covering resolution time, fees, satisfaction and reopened-request flags. The interesting half is the Silver layer: the source had channel names spelled several ways (`CallCentr`, `callcenter`, …), office codes split between `DXB_01` and `DXB-01`, and resolution timestamps landing before submission. Each gets handled explicitly — normalized, flagged, or excluded from averages — rather than filtered away. Incremental loads use `MERGE` with `UpdatedAt` watermarks. Seven analytics modules surfaced the finding the warehouse was built for: Dubai resolving 30.6% of requests against 92% elsewhere.
-
-**[Sales Data Warehouse — Northwind](https://github.com/Mohamed-Elsafty23/sales-dwh-northwind)** — Bronze/Silver/Gold in pure SQL
-Classic Northwind source, full Medallion build in PostgreSQL 15. Six dimensions, four of them SCD2, validation flags carried through Silver as `IsValid`/`ValidationNotes`, and separate initial-load and incremental-load scripts with row-count reconciliation between them. Five analytics suites over 471 orders and $1.18M revenue. ERDs at conceptual, logical and physical levels.
-
-**[Data Quality Profiler](https://github.com/Mohamed-Elsafty23/Data-Quality-Profiler)** — Schema-agnostic DQ monitoring for Postgres
-A single install script. A PL/pgSQL procedure introspects `information_schema`, generates SQL at runtime, and profiles every table and column — null counts, numeric min/max/avg, string length ranges — with no per-table configuration, so it drops into any Postgres database unchanged. Triggers re-run profiling on modification, three KPI views expose the results, and Looker Studio reads them directly.
-
-## Data collection
-
-**Arabic News Scraping Pipeline** — Multi-source corpus for Arabic NLP *(private repo)*
-Ten-plus major Arabic publications — Al-Masry Al-Youm, Al-Riyadh, Okaz, SPA, Al-Madina and others — each a standalone Scrapy spider, with `selenium-stealth` and `undetected-chromedriver` handling Cloudflare and JavaScript challenges. A merge step consolidates everything into one DataFrame and a CLI tool pushes the result to the HuggingFace Hub as a versioned public dataset for downstream LLM pre-training.
-
-`Scrapy` · `Selenium` · `undetected-chromedriver` · `HuggingFace Hub`
-
-## Research & coursework
-
-**[Music Network Analysis](https://github.com/Mohamed-Elsafty23/Music-Network-Analysis)** — Cultural diffusion through cover songs, modeled as a directed influence network. Centrality measures, community detection, topology analysis, and a network model grounded in diffusion theory rather than assembled ad hoc.
-
-**[Modelling Fire Frequency in Kenya](https://github.com/Mohamed-Elsafty23/Modelling-fire-frequency-in-Kenya)** — Bayesian negative binomial models in PyMC over MODIS hotspot and raster climate data, 2000–2018. TBATS seasonality checks, spatial categorization to improve fit, and a frequentist/Bayesian comparison on both real and simulated data.
-
-**[MSc Management & Data Science](https://github.com/Mohamed-Elsafty23/MScManagementDataScience)** — Applied statistics coursework from Leuphana.
+**[Fire Frequency in Kenya](https://github.com/Mohamed-Elsafty23/Modelling-fire-frequency-in-Kenya)** — Bayesian negative binomial models in PyMC over MODIS hotspot and raster climate data, 2000–2018, with TBATS seasonality checks and frequentist/Bayesian comparison.
 
 ---
 
 ## Stack
 
-**Languages** Python, SQL, PySpark, Spark SQL, PL/pgSQL, R, Bash
-**Data engineering** Airflow, dbt, Azure Data Factory, Kafka, Debezium CDC, Delta Lake, Medallion architecture, star schema, SCD Type 2, data quality monitoring
-**Platforms** Azure, Databricks, Unity Catalog, Snowflake, AWS (S3/IAM/SQS), PostgreSQL, DuckDB, MinIO, Parquet
-**Infrastructure** Terraform, Docker, GitHub Actions, Linux
-**AI engineering** RAG, FAISS, LangChain, AI agents, prompt engineering, HuggingFace, scikit-learn, NLP
-**BI** Power BI (DAX, Power Query), Tableau, Looker Studio, Streamlit, Plotly
+| | |
+|---|---|
+| **Languages** | Python, SQL, PySpark, Spark SQL, PL/pgSQL, R, Bash |
+| **Data engineering** | Airflow, dbt, Azure Data Factory, Kafka, Debezium CDC, Delta Lake, Medallion architecture, star schema, SCD Type 2, data quality monitoring |
+| **Platforms** | Azure, Databricks, Unity Catalog, Snowflake, AWS (S3/IAM/SQS), PostgreSQL, DuckDB, MinIO, Parquet |
+| **Infrastructure** | Terraform, Docker, GitHub Actions, Linux |
+| **AI engineering** | RAG, FAISS, LangChain, AI agents, prompt engineering, HuggingFace, scikit-learn, NLP |
+| **BI** | Power BI (DAX, Power Query), Tableau, Looker Studio, Streamlit, Plotly |
 
 ---
 
-## Contact
-
 [LinkedIn](https://linkedin.com/in/mohamedelsafty) · [Kaggle](https://kaggle.com/mohamedkhaledelsafty) · mohamed.kh.elsafty@gmail.com
-
-Open to Data Engineer, Analytics Engineer and AI/Data Platform roles in Germany and the EU.
