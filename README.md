@@ -4,7 +4,7 @@
 
 I build data platforms end to end: ingestion, modeling, the infrastructure underneath, and the checks that catch it when something breaks quietly. Currently on the AI & Data Platform team at **EOS GmbH**, leading a from-scratch Databricks and Azure platform from requirements through production rollout, and finishing an **M.Sc. in Management & Data Science** at Leuphana University Lüneburg.
 
-Before Germany: Arabic NLP and LLM dataset work at ASAS AI, 500+ students trained in Python for Udacity's DECI program, 13+ scraping contracts delivered on Upwork. 2x Kaggle Master.
+I've also built Arabic NLP and LLM dataset pipelines at ASAS AI, trained 500+ students in Python for Udacity's DECI program, and delivered 13+ scraping and automation contracts on Upwork. 2x Kaggle Master.
 
 Open to **Data Engineer**, **Analytics Engineer** and **AI / Data Platform** roles in Germany and the EU.
 
@@ -40,29 +40,85 @@ Evaluated with `ragas` on faithfulness, answer relevancy and context precision/r
 
 ## Data engineering & SQL
 
-| Project | What it is | Stack |
-|---|---|---|
-| **[Real-Time Banking Pipeline](https://github.com/Mohamed-Elsafty23/Real-Time-Banking-Data-Pipeline)** | Debezium captures row-level changes off Postgres through a `pgoutput` replication slot; Kafka carries them, a consumer batches date-partitioned Parquet to MinIO, Airflow syncs to Snowflake every minute, dbt snapshots handle SCD2. Eight containers with health checks and startup ordering. | Debezium · Kafka · Postgres · MinIO · Airflow · dbt · Snowflake · Docker |
-| **[Government Services DWH](https://github.com/Mohamed-Elsafty23/services-dwh)** | Citizen service requests across three channels, star schema with five SCD2 dimensions. The Silver layer handles what the source actually contained: channel names spelled four ways, office codes split between `DXB_01` and `DXB-01`, resolutions timestamped before submission — normalized or flagged, not filtered away. | PostgreSQL 15 · SQL `MERGE` · star schema · SCD2 |
-| **[Sales DWH — Northwind](https://github.com/Mohamed-Elsafty23/sales-dwh-northwind)** | Full Medallion build in pure SQL. Six dimensions, four on SCD2, validation flags carried through Silver, separate initial and incremental loads with row-count reconciliation between them. ERDs at conceptual, logical and physical levels. | PostgreSQL · SQL · ETL · star schema |
-| **[Data Quality Profiler](https://github.com/Mohamed-Elsafty23/Data-Quality-Profiler)** | One install script. A PL/pgSQL procedure introspects `information_schema` and generates SQL at runtime, profiling every table and column with zero per-table configuration — so it drops into any Postgres database unchanged. Triggers keep metrics current. | PL/pgSQL · dynamic SQL · Looker Studio |
+### [Real-Time Banking Data Pipeline](https://github.com/Mohamed-Elsafty23/Real-Time-Banking-Data-Pipeline) — change data capture from Postgres to Snowflake
+
+`Debezium` `Kafka` `PostgreSQL` `MinIO` `Airflow` `dbt` `Snowflake` `Docker`
+
+Debezium captures row-level changes off a Postgres OLTP database through a dedicated `pgoutput` replication slot, Kafka carries them, and a consumer batches them into date-partitioned Parquet on MinIO. Airflow syncs to Snowflake every minute; dbt snapshots handle SCD2 on customers and accounts, and the gold layer exposes `is_current` dimensions plus an incremental fact table. Financial amounts use Python `Decimal` with `ROUND_DOWN` end to end. Eight containers in Docker Compose with health checks and startup ordering, because getting Debezium, Kafka and Connect to come up in the right sequence is half the work.
+
+### [Government Services Data Warehouse](https://github.com/Mohamed-Elsafty23/services-dwh) — PostgreSQL star schema with five SCD2 dimensions
+
+`PostgreSQL 15` `SQL MERGE` `star schema` `SCD Type 2` `Medallion`
+
+Citizen service requests across portal, call center and branch, modeled as a central fact covering resolution time, fees, satisfaction and reopened-request flags. The interesting half is the Silver layer, which handles what the source actually contained rather than what it was supposed to: channel names spelled several ways (`CallCentr`, `callcenter`, …), office codes split between `DXB_01` and `DXB-01`, resolution timestamps landing before submission. Each one gets normalized, flagged or excluded from averages explicitly — nothing silently dropped. Incremental loads use `MERGE` with `UpdatedAt` watermarks, and seven analytics modules surfaced the finding the warehouse was built for: Dubai resolving 30.6% of requests against 92% elsewhere.
+
+### [Sales Data Warehouse — Northwind](https://github.com/Mohamed-Elsafty23/sales-dwh-northwind) — Bronze/Silver/Gold in pure SQL
+
+`PostgreSQL` `SQL` `ETL` `star schema` `SCD Type 2`
+
+Classic Northwind OLTP source taken through a full Medallion build. Six dimensions, four of them SCD2, with validation flags carried through Silver as `IsValid`/`ValidationNotes` so bad rows stay visible instead of disappearing. Separate initial-load and incremental-load scripts, plus a validation layer doing row-count reconciliation between them. Five analytics suites over 471 orders and $1.18M revenue, with ERDs at conceptual, logical and physical levels.
+
+### [Data Quality Profiler](https://github.com/Mohamed-Elsafty23/Data-Quality-Profiler) — schema-agnostic monitoring for PostgreSQL
+
+`PL/pgSQL` `dynamic SQL` `triggers` `Looker Studio`
+
+One install script. A PL/pgSQL procedure introspects `information_schema` to enumerate every table and column, then generates and executes SQL at runtime — null counts, numeric min/max/avg, string length ranges — with no per-table configuration, so it drops into any Postgres database unchanged. Triggers re-run profiling when tables are modified to keep metrics current, three KPI views expose the results, and Looker Studio reads them directly.
+
+---
 
 ## AI & LLM engineering
 
-| Project | What it is | Stack |
-|---|---|---|
-| **[DBpedia KGQA](https://github.com/Mohamed-Elsafty23/DBpedia_KGQA)** | Natural language → SPARQL → DBpedia. Entity linking with cascading confidence thresholds, LLM query generation, execution with error-driven repair and retries, and a fallback that pulls the 1–2 hop neighborhood around linked entities when SPARQL genuinely can't answer. Answers carry their execution path and latency. | SPARQL · knowledge graphs · LLM · Gradio |
-| **[FineWeb-Edu Scorer](https://github.com/Mohamed-Elsafty23/fineweb-edu-scorer)** | Teacher–student distillation from the FineWeb-Edu paper: Llama-3.3-70B scores web text 0–5 for educational value, a Ridge regressor learns to approximate it at **96.6% F1** for a fraction of the inference cost. The app shows both side by side, so you can see where the cheap model disagrees. | scikit-learn · distillation · Streamlit |
-| **[LLM FMEA Analyzer](https://github.com/Mohamed-Elsafty23/LLM-FMEA-Analyzer)** | Implements El Hassani et al. (2025): unstructured customer reviews in, structured FMEA table out — failure modes, root causes, S/O/D ratings, computed RPN, Pareto ranking of the 20% driving 80% of risk. Mostly an exercise in validating LLM JSON before it reaches a DataFrame. | structured output · Plotly · Streamlit |
-| **LLM-Powered LCA Analysis** *(private)* | ISO 14040/44 hotspot analysis for manufactured products. Five chained modules: LLM hotspot identification across the full life cycle, arXiv retrieval and PDF parsing for evidence, solution generation grounded in that literature, then deeper analysis of the top hotspots. Multi-key failover and threaded log streaming keep long runs alive and visible. | LLM · FAISS · arXiv · Streamlit |
-| **Instruction Dataset Platform** *(private)* | Multi-user annotation tooling for Arabic LLM training data. Annotators rate instruction–completion pairs to generate preference signals for RLHF/DPO; Firestore tracks per-user progress behind Google OAuth. Built at ASAS AI, where the bottleneck was never the model — it was consistent labels from a team of humans. | Streamlit · OAuth · Firestore · RLHF data |
-| **Arabic News Scraping Pipeline** *(private)* | Corpus collection across 10+ Arabic publications, each a standalone Scrapy spider, with `selenium-stealth` and `undetected-chromedriver` for Cloudflare and JS challenges. Merged, versioned and pushed to the HuggingFace Hub for downstream LLM pre-training. | Scrapy · Selenium · HuggingFace Hub |
+### [DBpedia KGQA](https://github.com/Mohamed-Elsafty23/DBpedia_KGQA) — natural language to SPARQL over a live knowledge graph
+
+`SPARQL` `knowledge graphs` `entity linking` `LLM` `Gradio`
+
+Five stages: entity linking via DBpedia Spotlight with cascading confidence thresholds, LLM SPARQL generation primed with multi-hop, aggregate, ASK and UNION examples, execution with error-driven query repair and up to two retries, and — when SPARQL genuinely can't answer — a fallback that pulls the 1-hop and 2-hop neighborhood around the linked entities and lets the model reason over raw triples. Answers come back with their execution path and latency attached, so you can see which route produced them. Gradio front end on HuggingFace Spaces, evaluated on 445 LC-QuAD questions.
+
+### [FineWeb-Edu Scorer](https://github.com/Mohamed-Elsafty23/fineweb-edu-scorer) — teacher-student distillation, made inspectable
+
+`scikit-learn` `knowledge distillation` `Streamlit` `HuggingFace datasets`
+
+Reproduces the scoring pipeline from the FineWeb-Edu paper (Penedo et al., 2024): Llama-3.3-70B scores web text 0–5 for educational value, and a Ridge regressor trained on 150 labeled samples learns to approximate it — **96.6% F1** on the hold-out at a fraction of the inference cost. Text extraction via `trafilatura` with a BeautifulSoup fallback. The Streamlit app puts teacher and student side by side, so you can see exactly where the cheap model disagrees with the expensive one.
+
+### [LLM FMEA Analyzer](https://github.com/Mohamed-Elsafty23/LLM-FMEA-Analyzer) — risk analysis from unstructured review text
+
+`structured output` `prompt engineering` `Plotly` `Streamlit`
+
+Implements the method from El Hassani et al. (2025). Customer car reviews go in; a structured FMEA table comes out with failure modes, root causes, Severity/Occurrence/Detection ratings and computed RPN, plus a Pareto chart ranking which 20% of failure modes drive 80% of the risk. Mostly an exercise in getting reliable structured JSON out of a language model and validating it before it ever reaches a DataFrame.
+
+### LLM-Powered Life Cycle Assessment — ISO 14040/44 hotspot analysis for manufactured products
+
+`LLM` `FAISS` `arXiv retrieval` `Streamlit` `Plotly`
+
+Five modules in sequence: an LLM hotspot analyzer identifies environmental impacts across production, distribution, use and end-of-life; an arXiv downloader pulls up to 10 relevant papers; a PDF processor extracts quantitative benchmarks; a solutions generator proposes eco-improvements grounded in that literature; and a deep analyzer revisits the highest-priority hotspots. FAISS backs semantic retrieval over the papers. Threaded processing with a `queue.Queue` log stream keeps the Streamlit UI live during long runs, and multi-key API failover keeps the whole thing from dying on a single rate limit.
+
+### Instruction Dataset Evaluation Platform — annotation tooling for Arabic LLM training data
+
+`Streamlit` `Google OAuth` `Firestore` `RLHF/DPO data`
+
+A multi-user platform where annotators review instruction–completion pairs and rate model outputs to generate preference signals for RLHF and DPO fine-tuning. Firestore stores user profiles, per-user progress and annotation records behind a Google OAuth flow, with cookie-based session state surviving page navigation. Annotations export as JSONL and feed the HuggingFace Hub side of the pipeline. Built at ASAS AI, where the bottleneck was never the model — it was getting consistent labels out of a team of humans.
+
+### Arabic News Scraping Pipeline — multi-source corpus for Arabic NLP
+
+`Scrapy` `Selenium` `undetected-chromedriver` `HuggingFace Hub`
+
+Ten-plus major Arabic publications — Al-Masry Al-Youm, Al-Riyadh, Okaz, SPA, Al-Madina and others — each implemented as a standalone Scrapy spider, with `selenium-stealth` and `undetected-chromedriver` handling Cloudflare and JavaScript challenges. A merge step consolidates everything into a single DataFrame, and a CLI tool pushes the result to the HuggingFace Hub as a versioned dataset for downstream LLM pre-training.
+
+---
 
 ## Research
 
-**[Music Network Analysis](https://github.com/Mohamed-Elsafty23/Music-Network-Analysis)** — musical influence as a directed network of cover songs; centrality, community detection and topology analysis on a model grounded in cultural diffusion theory rather than assembled ad hoc.
+### [Music Network Analysis](https://github.com/Mohamed-Elsafty23/Music-Network-Analysis) — musical influence as a directed network
 
-**[Fire Frequency in Kenya](https://github.com/Mohamed-Elsafty23/Modelling-fire-frequency-in-Kenya)** — Bayesian negative binomial models in PyMC over MODIS hotspot and raster climate data, 2000–2018, with TBATS seasonality checks and frequentist/Bayesian comparison.
+`network science` `centrality` `community detection` `Python`
+
+Cover songs modeled as edges of artistic influence, producing a directed network of cultural diffusion. Full pipeline from raw data through cleaning, network construction, centrality measures, connectivity and topology analysis, with the model specification grounded in diffusion theory rather than assembled ad hoc.
+
+### [Modelling Fire Frequency in Kenya](https://github.com/Mohamed-Elsafty23/Modelling-fire-frequency-in-Kenya) — Bayesian count models over climate data
+
+`PyMC` `Bayesian inference` `geospatial` `remote sensing`
+
+MODIS fire hotspot data joined with raster rainfall and temperature grids across 2000–2018, checked for seasonality with TBATS, then modeled with negative binomial regressions in both frequentist and Bayesian form. Spatial categorization improved fit, and the two approaches are compared against each other on real and simulated data.
 
 ---
 
